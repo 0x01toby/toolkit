@@ -53,3 +53,9 @@ func (h *Hex) ToHex(value any) (err error) {
 		return fmt.Errorf("can not convert %T to HexStr", value)
 	}
 }
+
+func HexstrToHex(str string) Hex {
+	var h Hex
+	_ = h.ToHex(str)
+	return h
+}

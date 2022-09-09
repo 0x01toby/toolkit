@@ -8,6 +8,17 @@ import (
 
 type PoolCfgOpt func(c *pool.Config)
 
+func GetDefaultOpts(endpoint string) []PoolCfgOpt {
+	return []PoolCfgOpt{
+		WithEthRpcFactory(endpoint),
+		WithEthRpcClose(),
+		WithInitCap(5),
+		WithMaxIdle(20),
+		WithMaxCap(100),
+		WithIdleTimeout(5 * time.Second),
+	}
+}
+
 func GetEthCfgOpts(endpoint string, initCap, maxCap, maxIdleCap int, maxIdle time.Duration) []PoolCfgOpt {
 	return []PoolCfgOpt{
 		WithEthRpcFactory(endpoint),

@@ -13,9 +13,8 @@ type Client struct {
 	pool *Pool
 }
 
-func NewClient(groupSize int, headers map[string]string, opts ...PoolCfgOpt) (*Client, error) {
+func NewClient(headers map[string]string, opts ...PoolCfgOpt) (*Client, error) {
 	newPool, err := NewPool(headers, opts...)
-	GroupSize = groupSize
 	return &Client{pool: newPool}, err
 }
 

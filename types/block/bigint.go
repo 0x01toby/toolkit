@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 )
 
 type BigInt big.Int
@@ -11,6 +12,11 @@ type BigInt big.Int
 func (b BigInt) String() string {
 	v := big.Int(b)
 	return v.String()
+}
+
+func (b BigInt) ToBigInt() *big.Int {
+	b2 := big.Int(b)
+	return &b2
 }
 
 func (b *BigInt) Scan(value interface{}) error {
@@ -21,7 +27,11 @@ func (b *BigInt) Scan(value interface{}) error {
 		*b = BigInt(t)
 		return nil
 	case string:
-		t.SetString(v, 10)
+		if strings.HasPrefix(strings.ToLower(v), "0x") {
+			t.SetString(v[2:], 16)
+		} else {
+			t.SetString(v, 10)
+		}
 		*b = BigInt(t)
 		return nil
 	}
@@ -38,4 +48,16 @@ func (b *BigInt) UnmarshalJSON(value []byte) error {
 		return err
 	}
 	return b.Scan(s)
+}
+
+func HexStrToBigInt(str string) (*big.Int, error) {
+	if !strings.HasPrefix(strings.ToLower(str), "0x") {
+		return nil, fmt.Errorf("str '%s' not a hex string", str)
+	}
+	var b *big.Int
+	setString, ok := b.SetString(str[2:], 16)
+	if !ok {
+		return nil, fmt.Errorf("str '%s' can not convert to big.Int", str)
+	}
+	return setString, nil
 }

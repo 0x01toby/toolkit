@@ -84,7 +84,6 @@ func (a *ABI) GetMethodBySig(sig string) *Method {
 
 func (a *ABI) GetMethodByID(id string) *Method {
 	for _, method := range a.MethodsBySignature {
-		fmt.Println("hex id", method.HexID())
 		if strings.EqualFold(method.HexID(), id) {
 			return method
 		}
