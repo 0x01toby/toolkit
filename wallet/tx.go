@@ -10,7 +10,19 @@ import (
 	"strings"
 )
 
-func CreateLegacyTx(
+type NonceStatus string
+
+func (n NonceStatus) ToString() string {
+	return string(n)
+}
+
+const (
+	Pending  = NonceStatus("pending")
+	Latest   = NonceStatus("latest")
+	Earliest = NonceStatus("earliest")
+)
+
+func CreateLegacyTxData(
 	nonce uint64,
 	to block.Address,
 	amount *big.Int,
@@ -36,7 +48,7 @@ func CreateLegacyTx(
 	}, nil
 }
 
-func Create1559Tx(
+func Create1559TxData(
 	chainID *big.Int,
 	nonce uint64,
 	to block.Address,
@@ -68,7 +80,7 @@ func Create1559Tx(
 	}, nil
 }
 
-func CreateContract(nonce uint64, gasLimit uint64, gasPrice *big.Int, code string) (types.TxData, error) {
+func CreateContractTxData(nonce uint64, gasLimit uint64, gasPrice *big.Int, code string) (types.TxData, error) {
 	return &types.LegacyTx{
 		Nonce:    nonce,
 		GasPrice: gasPrice,

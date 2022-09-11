@@ -3,9 +3,11 @@ package wallet
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/taorzhang/toolkit/abi"
 	"github.com/taorzhang/toolkit/client"
 	"github.com/taorzhang/toolkit/types/block"
 	"math/big"
@@ -45,35 +47,91 @@ func (w *Wallet) Address() string {
 	return crypto.PubkeyToAddress(w.PrivateKey.PublicKey).Hex()
 }
 
-func (w *Wallet) GetNonce(status string) (nonce uint64, err error) {
-	nonce, err = w.Client.GetNonce(context.Background(), block.Hexstr2Address(w.Address()), status)
+// GetNonce 获取交易nonce
+func (w *Wallet) GetNonce(status NonceStatus) (nonce uint64, err error) {
+	nonce, err = w.Client.GetNonce(context.Background(), block.Hexstr2Address(w.Address()), status.ToString())
 	return
 }
 
-func (w *Wallet) EstimateGas(txData *types.Transaction) {
-	w.Client.EstimateGas(context.Background(), client.CallParameter{
-		From:     w.Address(),
-		To:       txData.To().Hex(),
-		Data:     block.Hex(txData.Data()).Hex(),
-		Gas:      big.NewInt(int64(txData.Gas())).String(),
-		GasPrice: txData.GasPrice().String(),
-		Value:    txData.Value().String(),
-	})
+// EstimateGas 评估gas 费用
+func (w *Wallet) EstimateGas(txData *types.Transaction) (*big.Int, error) {
+	parameter := client.CallParameter{
+		From:     *block.Hexstr2Address(w.Address()).ToCommonAddress(),
+		Data:     block.Hex(txData.Data()),
+		GasPrice: txData.GasPrice(),
+		Value:    txData.Value(),
+	}
+	if txData.To() != nil {
+		parameter.To = block.Hexstr2Address(txData.To().Hex()).ToCommonAddress()
+	}
+	return w.Client.EstimateGas(context.Background(), parameter)
 }
 
-// CreateContract 部署合约
-func (w *Wallet) CreateContract() {
-
+// DeployContract 部署合约
+// code none 0x prefix
+func (w *Wallet) DeployContract(code string) (*block.Hash, error) {
+	txData, err := w.createContractTxData(code, "pending")
+	if err != nil {
+		return nil, err
+	}
+	sigedTx, err := w.signTx(txData)
+	if err != nil {
+		return nil, err
+	}
+	sendTx, err := w.Client.SendTx(context.Background(), sigedTx)
+	if err != nil {
+		return nil, err
+	}
+	address := block.Hex2Hash(sendTx)
+	return &address, nil
 }
 
 // SendNativeToken 发送原生代币
-func (w *Wallet) SendNativeToken(amount *big.Int) {
-
+func (w *Wallet) SendNativeToken(to block.Address, amount *big.Int) (*block.Hash, error) {
+	txData, err := w.createLegacyTxData(Pending, to, amount, nil)
+	if err != nil {
+		return nil, err
+	}
+	tx, err := w.signTx(txData)
+	if err != nil {
+		return nil, err
+	}
+	txHash, err := w.Client.SendTx(context.Background(), tx)
+	if err != nil {
+		return nil, err
+	}
+	hash := block.Hex2Hash(txHash)
+	return &hash, nil
 }
 
 // SendErc20Token 发送erc20代币
-func (w *Wallet) SendErc20Token(contract block.Address, amount *big.Int) {
-
+func (w *Wallet) SendErc20Token(contract block.Address, to block.Address, amount string) (*block.Hash, error) {
+	method, err := abi.NewMethod("function transfer(address dst, uint256 wad)")
+	if err != nil {
+		return nil, err
+	}
+	decimals, err := w.getContractDecimals(contract)
+	if err != nil {
+		return nil, err
+	}
+	tokenNum, err := DataMulDecimal(amount, int(decimals))
+	if err != nil {
+		return nil, err
+	}
+	txData, err := w.createLegacyTxData(Pending, contract, big.NewInt(0), method, to.String(), tokenNum.String())
+	if err != nil {
+		return nil, err
+	}
+	tx, err := w.signTx(txData)
+	if err != nil {
+		return nil, err
+	}
+	sendTx, err := w.Client.SendTx(context.Background(), tx)
+	if err != nil {
+		return nil, err
+	}
+	hash := block.Hex2Hash(sendTx)
+	return &hash, err
 }
 
 // ApprovalErc20Token 授权erc20代币
@@ -108,18 +166,95 @@ func (w *Wallet) ApprovalErc1155(contract block.Address, tokenID *big.Int) {
 
 }
 
-func (w *Wallet) sigTx(txData types.TxData) ([]byte, error) {
+// signTx 对交易进行签名
+func (w *Wallet) signTx(tx types.TxData) (string, error) {
 	chainID, err := w.Client.ChainID(context.Background())
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	signTx, err := types.SignTx(types.NewTx(txData), types.NewEIP155Signer(chainID), w.PrivateKey)
+	signTx, err := types.SignTx(types.NewTx(tx), types.NewEIP155Signer(chainID), w.PrivateKey)
+	if err != nil {
+		return "", err
+	}
+	binary, err := signTx.MarshalBinary()
+	if err != nil {
+		return "", err
+	}
+	return hexutil.Encode(binary), nil
+}
+
+// createContractTxData 创建合约交易
+func (w *Wallet) createContractTxData(code string, nonceStatus NonceStatus) (types.TxData, error) {
+	nonce, err := w.GetNonce(nonceStatus)
 	if err != nil {
 		return nil, err
 	}
-	bytes, err := rlp.EncodeToBytes(signTx)
+	gasPrice, err := w.Client.GetGasPrice(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	return bytes, nil
+	txData := &types.LegacyTx{
+		Nonce:    nonce,
+		GasPrice: gasPrice,
+		Value:    big.NewInt(0),
+		Data:     common.FromHex(code),
+	}
+	gas, err := w.EstimateGas(types.NewTx(txData))
+	if err != nil {
+		return nil, err
+	}
+	txData.Gas = gas.Uint64()
+	return txData, nil
+}
+
+// createLegacyTxData 创建一笔legacy交易
+func (w *Wallet) createLegacyTxData(nonceStatus NonceStatus, to block.Address, amount *big.Int, method *abi.Method, args ...interface{}) (types.TxData, error) {
+	nonce, err := w.GetNonce(nonceStatus)
+	if err != nil {
+		return nil, err
+	}
+	gasPrice, err := w.Client.GetGasPrice(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	var encode string
+	if method != nil {
+		result, err := method.Encode(args)
+		if err != nil {
+			return nil, err
+		}
+		encode = block.Hex(result).Hex()
+	}
+	txData := &types.LegacyTx{
+		Nonce:    nonce,
+		GasPrice: gasPrice,
+		Value:    amount,
+		To:       to.ToCommonAddress(),
+		Data:     common.FromHex(encode),
+	}
+	gas, err := w.EstimateGas(types.NewTx(txData))
+	if err != nil {
+		return nil, err
+	}
+	txData.Gas = gas.Uint64()
+	return txData, nil
+}
+
+func (w *Wallet) getContractDecimals(contractAddress block.Address) (uint64, error) {
+	var decimals string
+	method, err := abi.NewMethod("function decimals()")
+	if err != nil {
+		return 0, err
+	}
+	to := block.Hexstr2Address("0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844")
+	err = w.Client.MethodCall(context.Background(), &decimals, client.CallParameter{
+		To:   to.ToCommonAddress(),
+		Data: common.FromHex(block.Hex(method.ID()).Hex()),
+		Gas:  client.DefaultGasLimitInt,
+	}.ToArg(), "latest")
+	bigInt, err := block.HexStrToBigInt(decimals)
+	if err != nil {
+		return 0, err
+	}
+	return bigInt.Uint64(), nil
 }

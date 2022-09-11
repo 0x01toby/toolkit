@@ -54,7 +54,7 @@ func HexStrToBigInt(str string) (*big.Int, error) {
 	if !strings.HasPrefix(strings.ToLower(str), "0x") {
 		return nil, fmt.Errorf("str '%s' not a hex string", str)
 	}
-	var b *big.Int
+	b := new(big.Int)
 	setString, ok := b.SetString(str[2:], 16)
 	if !ok {
 		return nil, fmt.Errorf("str '%s' can not convert to big.Int", str)

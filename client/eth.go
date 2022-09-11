@@ -26,6 +26,10 @@ func (e *Eth) BlockNumber(ctx context.Context) (uint64, error) {
 	return uint64(number), err
 }
 
+func (e *Eth) MethodCall(ctx context.Context, out interface{}, args ...interface{}) error {
+	return e.client.Call("eth_call", &out, args...)
+}
+
 // BlockByHash 根据区块hash获取整个区块信息
 func (e *Eth) BlockByHash(ctx context.Context, hash block.Hash, full bool) (*block.Block, error) {
 	var blockData block.Block
@@ -210,7 +214,7 @@ func (e *Eth) TransactionsByHashList(ctx context.Context, hashList []block.Hash,
 // EstimateGas 矿工费估算
 func (e *Eth) EstimateGas(ctx context.Context, call CallParameter) (*big.Int, error) {
 	var result string
-	err := e.client.Call("eth_estimateGas", &result, []interface{}{call.ToArg()})
+	err := e.client.Call("eth_estimateGas", &result, call.ToArg())
 	if err != nil {
 		return nil, err
 	}
