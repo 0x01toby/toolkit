@@ -1,0 +1,4 @@
+keystore.json
+keystore.pass.env
+privatekey.env
+/keystore.pass.env
