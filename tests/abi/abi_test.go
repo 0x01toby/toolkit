@@ -16,7 +16,7 @@ func initProvider(t *testing.T) client.Provider {
 	opts := jsonrpc.GetEthCfgOpts(
 		"https://arbitrum-mainnet.token.im", 5, 100, 20, 5*time.Second)
 	c, err := jsonrpc.NewClient(
-		map[string]string{"deviceToken": "test1234"},
+		map[string]string{},
 		opts...)
 	assert.NoError(t, err)
 
