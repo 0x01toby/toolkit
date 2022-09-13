@@ -59,3 +59,24 @@ func HexstrToHex(str string) Hex {
 	_ = h.ToHex(str)
 	return h
 }
+
+func HexstrToString(value string) string {
+	var s string
+	if len(value) > 64*2+2 {
+		s = value[2+128:]
+	} else {
+		s = value[2:]
+	}
+	v, _ := hexutil.Decode("0x" + s)
+	return string(stripBytes(v))
+}
+
+func stripBytes(input []byte) []byte {
+	var result []byte
+	for _, v := range input {
+		if v != 0 {
+			result = append(result, v)
+		}
+	}
+	return result
+}

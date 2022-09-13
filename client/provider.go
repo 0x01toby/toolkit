@@ -11,6 +11,7 @@ import (
 type Provider interface {
 	ChainID(ctx context.Context) (*big.Int, error)
 	BlockNumber(ctx context.Context) (uint64, error)
+	GasTipCap(ctx context.Context) (*big.Int, error)
 	GetGasPrice(ctx context.Context) (*big.Int, error)
 	SendTx(ctx context.Context, signTx string) (result string, err error)
 	EstimateGas(ctx context.Context, call CallParameter) (*big.Int, error)

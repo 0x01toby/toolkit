@@ -26,6 +26,7 @@ func (e *Eth) BlockNumber(ctx context.Context) (uint64, error) {
 	return uint64(number), err
 }
 
+// MethodCall 执行一个eth call
 func (e *Eth) MethodCall(ctx context.Context, out interface{}, args ...interface{}) error {
 	return e.client.Call("eth_call", &out, args...)
 }

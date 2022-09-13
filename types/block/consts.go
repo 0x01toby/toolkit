@@ -9,3 +9,7 @@ const (
 	// TransactionDynamicFee eip-1559
 	TransactionDynamicFee math.HexOrDecimal64 = 2
 )
+
+var (
+	EmptyAddress = Hexstr2Address("0x0000000000000000000000000000000000000000")
+)

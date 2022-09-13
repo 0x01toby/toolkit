@@ -41,6 +41,6 @@ func (a Address) ToCommonAddress() *common.Address {
 func Hexstr2Address(str string) Address {
 	toHex := HexstrToHex(str)
 	var addr Address
-	copy(addr[:], toHex[:])
+	copy(addr[:], toHex[len(toHex)-20:])
 	return addr
 }
