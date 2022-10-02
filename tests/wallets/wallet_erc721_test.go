@@ -53,7 +53,7 @@ func TestNewWallet_erc721_mint(t *testing.T) {
 	wallet := initWallet(t)
 	method, err := abi.NewMethod("function mint(address _to, uint256 _tokenId, string _uri)")
 	assert.NoError(t, err)
-	contract := block.Hexstr2Address(erc721ContractAddress)
+	contract := block.Hexstr2Address("0x66372375Ef3a32b39D0cbBd509D6cF5359a29121")
 	toAddress := block.Hexstr2Address("0x9236B49DA606d83b3c69004D13fd14f9F545A90B")
 	txData, err := wallet.CreateLegacyTxData(wallet2.Pending, contract, big.NewInt(0), method, toAddress.String(), big.NewInt(1), "https://www.baidu.com/{1}")
 	assert.NoError(t, err)
@@ -69,7 +69,7 @@ func TestNewWallet_erc721_mint(t *testing.T) {
 // 发送 721 token
 func TestNewWallet_erc721_transfer(t *testing.T) {
 	wallet := initWallet2(t)
-	contract := block.Hexstr2Address(erc721ContractAddress)
+	contract := block.Hexstr2Address("0x66372375Ef3a32b39D0cbBd509D6cF5359a29121")
 	toAddress := block.Hexstr2Address("0x55D65F2dE30632e224766CF6652E02d5753B0fda")
 	txHash, err := wallet.SendErc721(contract, toAddress, big.NewInt(1))
 	assert.NoError(t, err)

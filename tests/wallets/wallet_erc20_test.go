@@ -33,7 +33,7 @@ func TestNewWallet_sendErc20(t *testing.T) {
 	txHash, err := wallet.SendErc20Token(
 		block.Hexstr2Address("0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844"),
 		block.Hexstr2Address("0x9236B49DA606d83b3c69004D13fd14f9F545A90B"),
-		"2.5")
+		"0.5")
 	assert.NoError(t, err)
 	t.Log("tx_hash:", txHash)
 }
@@ -80,4 +80,35 @@ func TestNewWallet_estimateDeployGas(t *testing.T) {
 	gas, err := wallet.EstimateGas(types.NewTx(data))
 	assert.NoError(t, err)
 	fmt.Println("gas", gas)
+}
+
+// TestNewWallet_sendErc20
+// 发送erc20 token
+func TestNewWallet_sendErc20_2(t *testing.T) {
+	wallet := initWallet2(t)
+	txHash, err := wallet.SendErc20Token(
+		block.Hexstr2Address("0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844"),
+		block.Hexstr2Address("0x55D65F2dE30632e224766CF6652E02d5753B0fda"),
+		"10")
+	assert.NoError(t, err)
+	t.Log("tx_hash:", txHash)
+}
+
+func TestNewWallet_sendErc20_3(t *testing.T) {
+	wallet := initWallet2(t)
+	txHash, err := wallet.SendErc20Token(
+		block.Hexstr2Address("0xc3359f800Aa2ea472348E26541F55d30E6633243"),
+		block.Hexstr2Address("0x6EaebeA65d41354DE3cBdE1DA2d9795ADcd2f875"),
+		"99.999999999999999")
+	assert.NoError(t, err)
+	t.Log("tx_hash:", txHash)
+}
+
+func TestNewWallet_mintErc20(t *testing.T) {
+	wallet := initWallet2(t)
+	txHash, err := wallet.MintErc20Token(
+		block.Hexstr2Address("0xc3359f800Aa2ea472348E26541F55d30E6633243"),
+		"999")
+	assert.NoError(t, err)
+	t.Log("tx_hash:", txHash)
 }

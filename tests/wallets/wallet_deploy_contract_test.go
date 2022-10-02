@@ -12,9 +12,23 @@ var erc721ContractAddress = "0x924C9C38Bac8e124fc0D2A747a009791Ea436b7c"
 // 部署合约
 // for test: https://goerli.etherscan.io/address/0x924c9c38bac8e124fc0d2a747a009791ea436b7c
 // contract address: 0x924C9C38Bac8e124fc0D2A747a009791Ea436b7c
-func TestNewWallet_deployContract(t *testing.T) {
+func TestNewWallet_deployContractERC721(t *testing.T) {
 	wallet := initWallet(t)
-	content, err := os.ReadFile("./contracts/721/output/MqyFt.bin")
+	content, err := os.ReadFile("./contracts/erc721/output/MqyFT.bin")
+	assert.NoError(t, err)
+	code := string(content)
+	txHash, err := wallet.DeployContract(code)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	assert.NoError(t, err)
+	t.Log("tx_hash:", txHash.String())
+}
+
+func TestNewWallet_deployContractErc20(t *testing.T) {
+	wallet := initWallet2(t)
+	content, err := os.ReadFile("./contracts/erc20/output/ERC20.bin")
 	assert.NoError(t, err)
 	code := string(content)
 	txHash, err := wallet.DeployContract(code)

@@ -19,14 +19,14 @@ func initProvider(t *testing.T) client.Provider {
 	return client.NewEthClient(c)
 }
 
-func initWallet(t *testing.T) *wallet2.Wallet {
+func initWallet(t *testing.T) *wallet2.Account {
 	content, err := os.ReadFile("./privatekey.env")
 	assert.NoError(t, err)
 	wallet := wallet2.NewWalletFromPrivateKeyStr(string(content), wallet2.WithEthProvider(initProvider(t)))
 	return wallet
 }
 
-func initWallet2(t *testing.T) *wallet2.Wallet {
+func initWallet2(t *testing.T) *wallet2.Account {
 	content, err := os.ReadFile("./keystore.json")
 	assert.NoError(t, err)
 	password, err := os.ReadFile("./keystore.pass.env")
