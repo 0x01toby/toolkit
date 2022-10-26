@@ -3,7 +3,7 @@ package transport
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/taorzhang/toolkit/jsonrpc/codec"
+	"github.com/taorzhang/toolkit/client/jsonrpc/codec"
 	"github.com/valyala/fasthttp"
 )
 

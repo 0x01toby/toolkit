@@ -27,7 +27,7 @@ func TestNewWallet_deployContractERC721(t *testing.T) {
 }
 
 func TestNewWallet_deployContractErc20(t *testing.T) {
-	wallet := initWallet2(t)
+	wallet := initWallet(t)
 	content, err := os.ReadFile("./contracts/erc20/output/ERC20.bin")
 	assert.NoError(t, err)
 	code := string(content)

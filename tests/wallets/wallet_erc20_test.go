@@ -31,9 +31,9 @@ func TestNewWallet_sendNative(t *testing.T) {
 func TestNewWallet_sendErc20(t *testing.T) {
 	wallet := initWallet(t)
 	txHash, err := wallet.SendErc20Token(
-		block.Hexstr2Address("0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844"),
-		block.Hexstr2Address("0x9236B49DA606d83b3c69004D13fd14f9F545A90B"),
-		"0.5")
+		block.Hexstr2Address("0x1f03e12208dd19e3b7a283e4cdef638dd3b79b4d"),
+		block.Hexstr2Address("0xe9A147EADb46df9b149fD01A1A2A296263Fae7EE"),
+		"888")
 	assert.NoError(t, err)
 	t.Log("tx_hash:", txHash)
 }
@@ -105,9 +105,9 @@ func TestNewWallet_sendErc20_3(t *testing.T) {
 }
 
 func TestNewWallet_mintErc20(t *testing.T) {
-	wallet := initWallet2(t)
+	wallet := initWallet(t)
 	txHash, err := wallet.MintErc20Token(
-		block.Hexstr2Address("0xc3359f800Aa2ea472348E26541F55d30E6633243"),
+		block.Hexstr2Address("0x1f03e12208dd19e3b7a283e4cdef638dd3b79b4d"),
 		"999")
 	assert.NoError(t, err)
 	t.Log("tx_hash:", txHash)

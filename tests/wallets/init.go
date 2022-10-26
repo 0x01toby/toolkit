@@ -3,20 +3,20 @@ package wallets
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/taorzhang/toolkit/client"
-	"github.com/taorzhang/toolkit/jsonrpc"
+	jsonrpc2 "github.com/taorzhang/toolkit/client/jsonrpc"
 	wallet2 "github.com/taorzhang/toolkit/wallet"
 	"os"
 	"testing"
 )
 
 func initProvider(t *testing.T) client.Provider {
-	opts := jsonrpc.GetDefaultOpts(
+	opts := jsonrpc2.GetDefaultOpts(
 		"https://goerli.infura.io/v3/fa57784b5b834db1b685341ec9867a3a")
-	c, err := jsonrpc.NewClient(
+	c, err := jsonrpc2.NewClient(
 		map[string]string{},
 		opts...)
 	assert.NoError(t, err)
-	return client.NewEthClient(c)
+	return client.NewEthClient(c, nil)
 }
 
 func initWallet(t *testing.T) *wallet2.Account {

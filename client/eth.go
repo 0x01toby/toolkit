@@ -5,18 +5,26 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/taorzhang/toolkit/jsonrpc"
+	"github.com/taorzhang/toolkit/client/jsonrpc"
 	"github.com/taorzhang/toolkit/types/block"
 	"math/big"
 	"strings"
 )
 
+type EthClientType string
+
+const (
+	GethType   = EthClientType("geth")
+	ErigonType = EthClientType("erigon")
+)
+
 type Eth struct {
-	client *jsonrpc.Client
+	client           *jsonrpc.Client
+	internalTxClient *jsonrpc.Client
 }
 
-func NewEthClient(client *jsonrpc.Client) Provider {
-	return &Eth{client: client}
+func NewEthClient(client *jsonrpc.Client, internalTxClient *jsonrpc.Client) Provider {
+	return &Eth{client: client, internalTxClient: internalTxClient}
 }
 
 // BlockNumber 获取最新区块高度
@@ -240,4 +248,82 @@ func (e *Eth) ChainID(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 	return big.NewInt(int64(chainID)), nil
+}
+
+func (e *Eth) InternalTxs(ctx context.Context, txHashes []block.Hash, clientType EthClientType) (map[string][]*block.InternalTransaction, error) {
+	switch clientType {
+	case ErigonType:
+		return e.erigonInternalTx(ctx, txHashes)
+	case GethType:
+		return e.gethInternalTx(ctx, txHashes)
+	}
+	return nil, fmt.Errorf("clientType [%s] is not support", clientType)
+}
+
+type ErigonCallerTrace struct {
+	Action struct {
+		From     block.Hex `json:"from"`
+		CallType string    `json:"callType"`
+		To       block.Hex `json:"to"`
+		Value    string    `json:"value"`
+	} `json:"action"`
+	TransactionHash block.Hex `json:"transactionHash"`
+	BlockNumber     uint64    `json:"blockNumber"`
+	Result          struct {
+		Address block.Hex `json:"address"`
+	}
+	Type string `json:"type"`
+}
+
+func (e *Eth) erigonInternalTx(ctx context.Context, txHashes []block.Hash) (map[string][]*block.InternalTransaction, error) {
+	var result = make(map[string][]*block.InternalTransaction)
+	elems := make([]rpc.BatchElem, 0)
+	internalTxs := make([][]ErigonCallerTrace, len(txHashes))
+	for idx := range txHashes {
+		internalTxs[idx] = make([]ErigonCallerTrace, 0)
+		elems = append(elems, rpc.BatchElem{
+			Method: "trace_transaction",
+			Args:   []interface{}{txHashes[idx].String()},
+			Result: &internalTxs[idx],
+		})
+	}
+	if err := e.internalTxClient.BatchCall(elems, true); err != nil {
+		return nil, err
+	}
+	for _, internalTx := range internalTxs {
+		if len(internalTx) == 0 {
+			continue
+		}
+		for _, callTrance := range internalTx {
+			if _, ok := result[callTrance.TransactionHash.Hex()]; !ok {
+				result[callTrance.TransactionHash.Hex()] = make([]*block.InternalTransaction, 0)
+			}
+			if strings.EqualFold(callTrance.Type, "create") {
+				result[callTrance.TransactionHash.Hex()] = append(result[callTrance.TransactionHash.Hex()], &block.InternalTransaction{
+					BlockNumber:     callTrance.BlockNumber,
+					TxHash:          callTrance.TransactionHash,
+					From:            callTrance.Action.From,
+					ContractAddress: callTrance.Result.Address,
+				})
+			} else {
+				if len(callTrance.Action.Value) > 2 && !strings.EqualFold(callTrance.Action.Value, "0x0") {
+					bigInt, _ := block.HexStrToBigInt(callTrance.Action.Value)
+					result[callTrance.TransactionHash.Hex()] = append(result[callTrance.TransactionHash.Hex()], &block.InternalTransaction{
+						BlockNumber: callTrance.BlockNumber,
+						TxHash:      callTrance.TransactionHash,
+						From:        callTrance.Action.From,
+						To:          callTrance.Action.To,
+						Value:       block.BigInt(*bigInt),
+					})
+				}
+			}
+		}
+	}
+	return result, nil
+}
+
+func (e *Eth) gethInternalTx(ctx context.Context, txHashes []block.Hash) (map[string][]*block.InternalTransaction, error) {
+	var result = make(map[string][]*block.InternalTransaction)
+
+	return result, nil
 }

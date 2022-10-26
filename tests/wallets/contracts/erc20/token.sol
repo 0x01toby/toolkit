@@ -7,8 +7,8 @@ contract ERC20 is IERC20 {
     uint public totalSupply;
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
-    string public name = "www.baidu.com";
-    string public symbol = "www.baidu.com";
+    string public name = "baidu.com";
+    string public symbol = "baidu.com";
     uint8 public decimals = 18;
 
     function transfer(address recipient, uint amount) external returns (bool) {
@@ -36,7 +36,7 @@ contract ERC20 is IERC20 {
         return true;
     }
 
-    function mint(uint amount) external {
+    function mint(uint amount) OnlyAdmin external {
         balanceOf[msg.sender] += amount;
         totalSupply += amount;
         emit Transfer(address(0), msg.sender, amount);

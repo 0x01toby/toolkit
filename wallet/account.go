@@ -389,6 +389,7 @@ func (w *Account) CreateLegacyTxData(nonceStatus NonceStatus, to block.Address, 
 		}
 		encode = block.Hex(result).Hex()
 	}
+	fmt.Println("sssss:", encode)
 	txData := &types.LegacyTx{
 		Nonce:    nonce,
 		GasPrice: gasPrice,

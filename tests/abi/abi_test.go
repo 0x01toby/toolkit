@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/taorzhang/toolkit/abi"
 	"github.com/taorzhang/toolkit/client"
-	"github.com/taorzhang/toolkit/jsonrpc"
+	jsonrpc2 "github.com/taorzhang/toolkit/client/jsonrpc"
 	"github.com/taorzhang/toolkit/types/block"
 	"math/big"
 	"testing"
@@ -13,14 +13,14 @@ import (
 )
 
 func initProvider(t *testing.T) client.Provider {
-	opts := jsonrpc.GetEthCfgOpts(
+	opts := jsonrpc2.GetEthCfgOpts(
 		"https://arbitrum-mainnet.token.im", 5, 100, 20, 5*time.Second)
-	c, err := jsonrpc.NewClient(
+	c, err := jsonrpc2.NewClient(
 		map[string]string{},
 		opts...)
 	assert.NoError(t, err)
 
-	return client.NewEthClient(c)
+	return client.NewEthClient(c, nil)
 }
 
 func TestABI_Event(t *testing.T) {
@@ -48,6 +48,12 @@ func TestABI_Event(t *testing.T) {
 func TestABI_2(t *testing.T) {
 	newInt := big.NewInt(64)
 	t.Log("len", newInt.BitLen())
+}
+
+func TestABI_3(t *testing.T) {
+	method, err := abi.NewMethod("function transfer(address dst, uint256 wad)")
+	assert.NoError(t, err)
+	t.Log("method", string(method.HexID()))
 }
 
 func TestABI_encode1(t *testing.T) {
