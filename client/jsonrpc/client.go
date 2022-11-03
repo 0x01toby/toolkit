@@ -13,8 +13,8 @@ type Client struct {
 	pool *Pool
 }
 
-func NewClient(headers map[string]string, opts ...PoolCfgOpt) (*Client, error) {
-	newPool, err := NewPool(headers, opts...)
+func NewClient(opts ...PoolCfgOpt) (*Client, error) {
+	newPool, err := NewPool(opts...)
 	return &Client{pool: newPool}, err
 }
 

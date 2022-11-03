@@ -10,16 +10,16 @@ type Pool struct {
 	headers map[string]string
 }
 
-func NewPool(headers map[string]string, opts ...PoolCfgOpt) (*Pool, error) {
-	poolConfig := &pool.Config{}
+func NewPool(opts ...PoolCfgOpt) (*Pool, error) {
+	poolConfig := &PoolCfg{headers: make(map[string]string)}
 	for _, opt := range opts {
 		opt(poolConfig)
 	}
-	channelPool, err := pool.NewChannelPool(poolConfig)
+	channelPool, err := pool.NewChannelPool(&poolConfig.Config)
 	if err != nil {
 		return nil, err
 	}
-	return &Pool{Pool: channelPool, headers: headers}, nil
+	return &Pool{Pool: channelPool, headers: poolConfig.headers}, nil
 }
 
 func (p *Pool) GetClient() (*rpc.Client, error) {

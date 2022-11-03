@@ -2,27 +2,33 @@ package jsonrpc
 
 import (
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/silenceper/pool"
 	"time"
 )
 
-type PoolCfgOpt func(c *pool.Config)
+var (
+	InitCap     = 5
+	MaxIdle     = 20
+	MaxCap      = 100
+	IdleTimeout = 5 * time.Second
+)
+
+type PoolCfgOpt func(c *PoolCfg)
 
 func GetDefaultOpts(endpoint string) []PoolCfgOpt {
 	return []PoolCfgOpt{
-		WithEthRpcFactory(endpoint),
-		WithEthRpcClose(),
-		WithInitCap(5),
-		WithMaxIdle(20),
-		WithMaxCap(100),
-		WithIdleTimeout(5 * time.Second),
+		WithRpcFactory(endpoint),
+		WithRpcClose(),
+		WithInitCap(InitCap),
+		WithMaxIdle(MaxIdle),
+		WithMaxCap(MaxCap),
+		WithIdleTimeout(IdleTimeout),
 	}
 }
 
 func GetEthCfgOpts(endpoint string, initCap, maxCap, maxIdleCap int, maxIdle time.Duration) []PoolCfgOpt {
 	return []PoolCfgOpt{
-		WithEthRpcFactory(endpoint),
-		WithEthRpcClose(),
+		WithRpcFactory(endpoint),
+		WithRpcClose(),
 		WithInitCap(initCap),
 		WithMaxIdle(maxIdleCap),
 		WithMaxCap(maxCap),
@@ -30,16 +36,25 @@ func GetEthCfgOpts(endpoint string, initCap, maxCap, maxIdleCap int, maxIdle tim
 	}
 }
 
-func WithEthRpcFactory(endpoint string) PoolCfgOpt {
-	return func(c *pool.Config) {
+// WithRpcHeaders headers
+func WithRpcHeaders(headers map[string]string) PoolCfgOpt {
+	return func(c *PoolCfg) {
+		c.headers = headers
+	}
+}
+
+// WithRpcFactory factory
+func WithRpcFactory(endpoint string) PoolCfgOpt {
+	return func(c *PoolCfg) {
 		c.Factory = func() (interface{}, error) {
 			return rpc.Dial(endpoint)
 		}
 	}
 }
 
-func WithEthRpcClose() PoolCfgOpt {
-	return func(c *pool.Config) {
+// WithRpcClose rpc close时
+func WithRpcClose() PoolCfgOpt {
+	return func(c *PoolCfg) {
 		c.Close = func(v interface{}) error {
 			v.(*rpc.Client).Close()
 			return nil
@@ -48,25 +63,25 @@ func WithEthRpcClose() PoolCfgOpt {
 }
 
 func WithInitCap(cap int) PoolCfgOpt {
-	return func(c *pool.Config) {
+	return func(c *PoolCfg) {
 		c.InitialCap = cap
 	}
 }
 
 func WithMaxCap(cap int) PoolCfgOpt {
-	return func(c *pool.Config) {
+	return func(c *PoolCfg) {
 		c.MaxCap = cap
 	}
 }
 
 func WithMaxIdle(cap int) PoolCfgOpt {
-	return func(c *pool.Config) {
+	return func(c *PoolCfg) {
 		c.MaxIdle = cap
 	}
 }
 
 func WithIdleTimeout(t time.Duration) PoolCfgOpt {
-	return func(c *pool.Config) {
+	return func(c *PoolCfg) {
 		c.IdleTimeout = t
 	}
 }

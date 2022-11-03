@@ -20,14 +20,3 @@ func (l *Logger) Info(msg string, ctx ...interface{}) {
 	}
 	l.log.Info(msg, ctx...)
 }
-
-func a() {
-	logger := NewLogger()
-	logger.Info("hello", "a", "b")
-	logger.Info("world")
-}
-
-func b() {
-	fmt.Println("hello")
-	a()
-}

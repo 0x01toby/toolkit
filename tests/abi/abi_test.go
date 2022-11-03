@@ -5,21 +5,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/taorzhang/toolkit/abi"
 	"github.com/taorzhang/toolkit/client"
-	jsonrpc2 "github.com/taorzhang/toolkit/client/jsonrpc"
+	"github.com/taorzhang/toolkit/client/jsonrpc"
 	"github.com/taorzhang/toolkit/types/block"
 	"math/big"
 	"testing"
-	"time"
 )
 
 func initProvider(t *testing.T) client.Provider {
-	opts := jsonrpc2.GetEthCfgOpts(
-		"https://arbitrum-mainnet.token.im", 5, 100, 20, 5*time.Second)
-	c, err := jsonrpc2.NewClient(
-		map[string]string{},
-		opts...)
+	opts := jsonrpc.GetDefaultOpts("https://arbitrum-mainnet.token.im")
+	opts = append(opts, jsonrpc.WithRpcHeaders(map[string]string{
+		"deviceToken": "test1234",
+	}))
+	c, err := jsonrpc.NewClient(opts...)
 	assert.NoError(t, err)
-
 	return client.NewEthClient(c, nil)
 }
 
