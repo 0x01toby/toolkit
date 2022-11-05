@@ -1,6 +1,6 @@
 package block
 
-type InternalTransaction struct {
+type InternalTxCallTrace struct {
 	From            Hex
 	To              Hex
 	ContractAddress Hex

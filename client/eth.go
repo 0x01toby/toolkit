@@ -161,6 +161,7 @@ func (e *Eth) BlocksByNumbers(ctx context.Context, heights []uint64, full bool) 
 		for blockIdx := range blocks {
 			for txIdx := range blocks[blockIdx].Transactions {
 				blocks[blockIdx].Transactions[txIdx].Receipt = new(block.Receipt)
+				blocks[blockIdx].Transactions[txIdx].InternalTraceCalls = make([]*block.InternalTxCallTrace, 0)
 				receipts = append(receipts, rpc.BatchElem{
 					Method: "eth_getTransactionReceipt",
 					Args:   []interface{}{blocks[blockIdx].Transactions[txIdx].Hash},
@@ -250,7 +251,7 @@ func (e *Eth) ChainID(ctx context.Context) (*big.Int, error) {
 	return big.NewInt(int64(chainID)), nil
 }
 
-func (e *Eth) InternalTxs(ctx context.Context, txHashes []block.Hash, clientType EthClientType) (map[string][]*block.InternalTransaction, error) {
+func (e *Eth) InternalTxs(ctx context.Context, txHashes []block.Hash, clientType EthClientType) (map[string][]*block.InternalTxCallTrace, error) {
 	switch clientType {
 	case ErigonType:
 		return e.erigonInternalTx(ctx, txHashes)
@@ -275,8 +276,8 @@ type ErigonCallerTrace struct {
 	Type string `json:"type"`
 }
 
-func (e *Eth) erigonInternalTx(ctx context.Context, txHashes []block.Hash) (map[string][]*block.InternalTransaction, error) {
-	var result = make(map[string][]*block.InternalTransaction)
+func (e *Eth) erigonInternalTx(ctx context.Context, txHashes []block.Hash) (map[string][]*block.InternalTxCallTrace, error) {
+	var result = make(map[string][]*block.InternalTxCallTrace)
 	elems := make([]rpc.BatchElem, 0)
 	internalTxs := make([][]ErigonCallerTrace, len(txHashes))
 	for idx := range txHashes {
@@ -296,10 +297,10 @@ func (e *Eth) erigonInternalTx(ctx context.Context, txHashes []block.Hash) (map[
 		}
 		for _, callTrance := range internalTx {
 			if _, ok := result[callTrance.TransactionHash.Hex()]; !ok {
-				result[callTrance.TransactionHash.Hex()] = make([]*block.InternalTransaction, 0)
+				result[callTrance.TransactionHash.Hex()] = make([]*block.InternalTxCallTrace, 0)
 			}
 			if strings.EqualFold(callTrance.Type, "create") {
-				result[callTrance.TransactionHash.Hex()] = append(result[callTrance.TransactionHash.Hex()], &block.InternalTransaction{
+				result[callTrance.TransactionHash.Hex()] = append(result[callTrance.TransactionHash.Hex()], &block.InternalTxCallTrace{
 					BlockNumber:     callTrance.BlockNumber,
 					TxHash:          callTrance.TransactionHash,
 					From:            callTrance.Action.From,
@@ -308,7 +309,7 @@ func (e *Eth) erigonInternalTx(ctx context.Context, txHashes []block.Hash) (map[
 			} else {
 				if len(callTrance.Action.Value) > 2 && !strings.EqualFold(callTrance.Action.Value, "0x0") {
 					bigInt, _ := block.HexStrToBigInt(callTrance.Action.Value)
-					result[callTrance.TransactionHash.Hex()] = append(result[callTrance.TransactionHash.Hex()], &block.InternalTransaction{
+					result[callTrance.TransactionHash.Hex()] = append(result[callTrance.TransactionHash.Hex()], &block.InternalTxCallTrace{
 						BlockNumber: callTrance.BlockNumber,
 						TxHash:      callTrance.TransactionHash,
 						From:        callTrance.Action.From,
@@ -322,8 +323,8 @@ func (e *Eth) erigonInternalTx(ctx context.Context, txHashes []block.Hash) (map[
 	return result, nil
 }
 
-func (e *Eth) gethInternalTx(ctx context.Context, txHashes []block.Hash) (map[string][]*block.InternalTransaction, error) {
-	var result = make(map[string][]*block.InternalTransaction)
+func (e *Eth) gethInternalTx(ctx context.Context, txHashes []block.Hash) (map[string][]*block.InternalTxCallTrace, error) {
+	var result = make(map[string][]*block.InternalTxCallTrace)
 
 	return result, nil
 }

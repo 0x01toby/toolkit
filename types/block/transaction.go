@@ -35,5 +35,6 @@ type Transaction struct {
 	MaxFeePerGas         *BigInt
 
 	// receipt
-	Receipt *Receipt
+	Receipt            *Receipt
+	InternalTraceCalls []*InternalTxCallTrace
 }

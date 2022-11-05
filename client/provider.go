@@ -23,7 +23,7 @@ type Provider interface {
 	GetNonce(ctx context.Context, addr block.Address, status string) (nonce uint64, err error)
 	TransactionByHash(ctx context.Context, hash block.Hash, full bool) (*block.Transaction, error)
 	TransactionsByHashList(ctx context.Context, hash []block.Hash, full bool) ([]*block.Transaction, error)
-	InternalTxs(ctx context.Context, txHashes []block.Hash, clientType EthClientType) (map[string][]*block.InternalTransaction, error)
+	InternalTxs(ctx context.Context, txHashes []block.Hash, clientType EthClientType) (map[string][]*block.InternalTxCallTrace, error)
 }
 
 var DefaultGasLimit = "0x30000"

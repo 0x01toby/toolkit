@@ -1,12 +1,15 @@
 package jsonrpc
 
 import (
+	"fmt"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/taorzhang/toolkit/errs"
 	"sync"
 )
 
 var (
 	GroupSize = 50
+	ReTries   = 3
 )
 
 type Client struct {
@@ -31,6 +34,23 @@ func (c *Client) Call(method string, out interface{}, args ...interface{}) error
 
 // BatchCall 批量rpc请求，当批量数过多，会进行分组
 func (c *Client) BatchCall(elems []rpc.BatchElem, allOk bool) error {
+	if len(elems) == 0 {
+		return nil
+	}
+
+	if allOk {
+		for i := 0; i < ReTries; i++ {
+			if err := c.batchCall(elems, true); err == nil {
+				return nil
+			}
+
+		}
+		return errs.New(errs.MaxRetryPollingBatchCall, fmt.Sprintf("retries %d", ReTries))
+	}
+	return c.batchCall(elems, allOk)
+}
+
+func (c *Client) batchCall(elems []rpc.BatchElem, allOk bool) error {
 	if len(elems) == 0 {
 		return nil
 	}
