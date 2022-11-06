@@ -34,3 +34,34 @@ func Test_case1(t *testing.T) {
 select 中的deadlock, 这个时候channel都是停止状态，导致select无法监听到io操作，直接就死锁了。
 select中永远不可能有满足的条件，就会死锁，select就处于永久阻塞状态。
 */
+
+type Hello struct {
+	cancel chan struct{}
+}
+
+func (h *Hello) isQuit() bool {
+	select {
+	case <-h.cancel:
+		fmt.Println("cancel")
+		return true
+	default:
+		return false
+	}
+}
+
+func Test_case2(t *testing.T) {
+	s := &Hello{cancel: make(chan struct{})}
+	timer := time.After(3 * time.Second)
+
+	for {
+		select {
+		case <-timer:
+			t.Log("cancel")
+			close(s.cancel)
+		default:
+			quit := s.isQuit()
+			t.Log("is Quit:", quit)
+			<-time.After(1 * time.Second)
+		}
+	}
+}

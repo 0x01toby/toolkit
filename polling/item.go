@@ -7,6 +7,7 @@ import (
 )
 
 type Item struct {
+	cancel             bool
 	ctx                context.Context
 	blocks             []*block.Block
 	client             client.Provider
@@ -17,7 +18,11 @@ type Item struct {
 }
 
 func NewItem(ctx context.Context, client client.Provider, start, end uint, skipInternal bool, internalClientType client.EthClientType) *Item {
-	return &Item{ctx: ctx, blocks: make([]*block.Block, 0), start: start, end: end, client: client, skipInternal: skipInternal, internalClientType: internalClientType}
+	return &Item{ctx: ctx, blocks: make([]*block.Block, 0), start: start, end: end, client: client, skipInternal: skipInternal, internalClientType: internalClientType, cancel: false}
+}
+
+func NewCancelItem(ctx context.Context) *Item {
+	return &Item{cancel: true, ctx: ctx}
 }
 
 func (i *Item) Retrieve() error {
