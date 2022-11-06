@@ -19,8 +19,7 @@ type Pipeline struct {
 	client client.Provider
 }
 
-func NewPipeline(opts ...CfgOpt) (*Pipeline, error) {
-	c := NewConfig()
+func NewPipeline(c *Config, opts ...CfgOpt) (*Pipeline, error) {
 	for idx := range opts {
 		if err := opts[idx](c); err != nil {
 			return nil, err
@@ -29,6 +28,7 @@ func NewPipeline(opts ...CfgOpt) (*Pipeline, error) {
 	return &Pipeline{items: make(chan *Item, c.ItemLen), cancel: make(chan bool), config: c}, nil
 }
 
+// isQuit pipeline停止
 func (p *Pipeline) isQuit() bool {
 	select {
 	case <-p.cancel:
@@ -38,6 +38,7 @@ func (p *Pipeline) isQuit() bool {
 	}
 }
 
+// NextBlockHeights 下一次polling动作
 func (p *Pipeline) NextBlockHeights(start uint64) *NextPollingAction {
 	var iStart, iEnd = start, start + uint64(p.config.Step)
 	if p.config.Mode.IsChase() {
@@ -62,6 +63,7 @@ func (p *Pipeline) NextBlockHeights(start uint64) *NextPollingAction {
 	return NewNextPollingAction(iStart, iEnd, ContinuePolling)
 }
 
+// Run 执行流程
 func (p *Pipeline) Run(ctx context.Context) {
 	var blockHeight = p.config.Start
 	limitCh := make(chan struct{}, p.config.Concurrency)
@@ -76,6 +78,8 @@ func (p *Pipeline) Run(ctx context.Context) {
 				log.Warn(ctx, "pipeline is ready to quit", "ctx_err", ctx.Err())
 				p.items <- NewCancelItem(context.Background())
 				close(p.cancel)
+				<-time.After(p.config.QuitWaitingDuration)
+				quitPipeline <- true
 			case item := <-p.items:
 				// pipeline有数据，则消费数据
 				if item.cancel {
@@ -99,8 +103,11 @@ func (p *Pipeline) Run(ctx context.Context) {
 					// 任务结束
 					p.items <- NewCancelItem(context.Background())
 					close(p.cancel)
+					<-time.After(p.config.QuitWaitingDuration)
+					quitPipeline <- true
 					break
 				}
+				blockHeight = nextAction.iEnd
 				go func(m, n uint64) {
 					defer func() {
 						<-limitCh

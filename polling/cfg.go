@@ -29,12 +29,16 @@ type Config struct {
 	// Step 每次取块数量
 	Step uint
 	// Concurrency 并发
-	Concurrency  uint
-	QuitDuration time.Duration
+	Concurrency         uint
+	QuitWaitingDuration time.Duration
 }
 
-func NewConfig() *Config {
-	return &Config{ItemLen: 100, Step: 8, Concurrency: 5, Mode: LinearMode, QuitDuration: 10 * time.Second}
+func NewLinerConfig() *Config {
+	return &Config{ItemLen: 100, Step: 8, Concurrency: 1, Mode: LinearMode, QuitWaitingDuration: 10 * time.Second}
+}
+
+func NewChaseConfig() *Config {
+	return &Config{ItemLen: 100, Step: 16, Concurrency: 3, Mode: ChaseMode, QuitWaitingDuration: 30 * time.Second}
 }
 
 type CfgOpt func(c *Config) error
