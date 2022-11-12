@@ -10,11 +10,8 @@ import (
 )
 
 func initProvider(t *testing.T) client.Provider {
-	opts := jsonrpc2.GetDefaultOpts(
-		"https://goerli.infura.io/v3/fa57784b5b834db1b685341ec9867a3a")
-	c, err := jsonrpc2.NewClient(
-		map[string]string{},
-		opts...)
+	opts := jsonrpc2.GetDefaultOpts("https://goerli.infura.io/v3/fa57784b5b834db1b685341ec9867a3a")
+	c, err := jsonrpc2.NewClient(opts...)
 	assert.NoError(t, err)
 	return client.NewEthClient(c, nil)
 }

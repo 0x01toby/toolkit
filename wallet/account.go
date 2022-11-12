@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/taorzhang/toolkit/abi"
 	"github.com/taorzhang/toolkit/client"
 	"github.com/taorzhang/toolkit/types/block"
@@ -75,23 +76,28 @@ func (w *Account) EstimateGas(txData *types.Transaction) (*big.Int, error) {
 	return w.Client.EstimateGas(context.Background(), parameter)
 }
 
-// DeployContract 部署合约
+// DeployContractByCreate 部署合约
 // code none 0x prefix
-func (w *Account) DeployContract(code string) (*block.Hash, error) {
-	txData, err := w.CreateContractTxData(code, "pending")
+func (w *Account) DeployContractByCreate(code string) (*block.Hash, block.Hex, error) {
+	txData, contractAddress, err := w.CreateContractTxData(code, "pending")
+	// calculate contract address
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	sigedTx, err := w.SignTx(txData)
+	signedTx, err := w.SignTx(txData)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	sendTx, err := w.Client.SendTx(context.Background(), sigedTx)
+	sendTx, err := w.Client.SendTx(context.Background(), signedTx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	address := block.Hex2Hash(sendTx)
-	return &address, nil
+	return &address, contractAddress, nil
+}
+
+func (w *Account) DeployContractByCreate2(code string) (*block.Hash, error) {
+	return nil, nil
 }
 
 // SendNativeToken 发送原生代币
@@ -348,14 +354,17 @@ func (w *Account) SignTx(tx types.TxData) (string, error) {
 }
 
 // CreateContractTxData 创建合约交易
-func (w *Account) CreateContractTxData(code string, nonceStatus NonceStatus) (types.TxData, error) {
+func (w *Account) CreateContractTxData(code string, nonceStatus NonceStatus) (types.TxData, block.Hex, error) {
 	nonce, err := w.GetNonce(nonceStatus)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	// 计算合约地址
+	data, _ := rlp.EncodeToBytes([]interface{}{block.Hexstr2Address(w.Address()).ToCommonAddress(), nonce})
+	contractAddress := common.BytesToAddress(block.Keccak256(data)[12:])
 	gasPrice, err := w.Client.GetGasPrice(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	txData := &types.LegacyTx{
 		Nonce:    nonce,
@@ -365,10 +374,10 @@ func (w *Account) CreateContractTxData(code string, nonceStatus NonceStatus) (ty
 	}
 	gas, err := w.EstimateGas(types.NewTx(txData))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	txData.Gas = gas.Uint64()
-	return txData, nil
+	return txData, contractAddress.Bytes(), nil
 }
 
 // CreateLegacyTxData 创建一笔legacy交易
