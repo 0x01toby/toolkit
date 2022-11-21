@@ -16,7 +16,6 @@ func initArbTracker(t *testing.T) client.Provider {
 	opts := jsonrpc2.GetEthCfgOpts(
 		"https://arbitrum-mainnet.token.im", 5, 100, 20, 5*time.Second)
 	c, err := jsonrpc2.NewClient(
-		map[string]string{},
 		opts...)
 	assert.NoError(t, err)
 	return client.NewEthClient(c, nil)
@@ -27,7 +26,6 @@ func initEthTracker(t *testing.T) client.Provider {
 	opts := jsonrpc2.GetEthCfgOpts(
 		"https://mainnet-eth.token.im", 5, 100, 20, 5*time.Second)
 	c, err := jsonrpc2.NewClient(
-		map[string]string{},
 		opts...)
 	assert.NoError(t, err)
 	return client.NewEthClient(c, nil)
@@ -36,7 +34,6 @@ func initEthTracker(t *testing.T) client.Provider {
 func initEthInternalTracker(t *testing.T) client.Provider {
 	opts := jsonrpc2.GetEthCfgOpts("http://goerli.testnet.private:8080/openethereum", 5, 20, 5, 5*time.Second)
 	c, err := jsonrpc2.NewClient(
-		map[string]string{},
 		opts...)
 	assert.NoError(t, err)
 	assert.NoError(t, err)

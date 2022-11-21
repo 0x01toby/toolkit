@@ -132,6 +132,21 @@ func (t *Type) isDynamicType() bool {
 	return t.kind == KindString || t.kind == KindBytes || t.kind == KindSlice || (t.kind == KindArray && t.elem.isDynamicType())
 }
 
+// Decode decodes an object using this type
+func (t *Type) Decode(input []byte) (interface{}, error) {
+	return Decode(t, input)
+}
+
+// DecodeStruct decodes an object using this type to the out param
+func (t *Type) DecodeStruct(input []byte, out interface{}) error {
+	return DecodeStruct(t, input, out)
+}
+
+// Encode encodes an object using this type
+func (t *Type) Encode(v interface{}) ([]byte, error) {
+	return Encode(v, t)
+}
+
 // Format returns the raw representation of the type
 func (t *Type) Format(includeArgs bool) string {
 	switch t.kind {

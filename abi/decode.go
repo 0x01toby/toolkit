@@ -47,7 +47,7 @@ func decode(t *Type, input []byte) (interface{}, []byte, error) {
 	var err error
 
 	if len(input) < 32 {
-		return nil, nil, fmt.Errorf("incorret length")
+		return nil, nil, fmt.Errorf("incorrect length")
 	}
 
 	if t.isVariableInput() {
@@ -66,7 +66,7 @@ func decode(t *Type, input []byte) (interface{}, []byte, error) {
 	case KindSlice:
 		return decodeArraySlice(t, input[32:], length)
 
-	case KindAddress:
+	case KindArray:
 		return decodeArraySlice(t, input, t.size)
 	}
 
