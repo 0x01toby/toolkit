@@ -290,6 +290,28 @@ func (w *Account) SendErc721(contract block.Address, to block.Address, tokenID *
 	return &hash, nil
 }
 
+// SendErc721 发送erc721
+func (w *Account) SendUnStandardErc721(contract block.Address, to block.Address, tokenID *big.Int) (*block.Hash, error) {
+	method, err := abi.NewMethod("function sendNFT(uint256 _tokenId, address _to)")
+	if err != nil {
+		return nil, err
+	}
+	data, err := w.CreateLegacyTxData(Pending, contract, big.NewInt(0), method, tokenID, to.String())
+	if err != nil {
+		return nil, err
+	}
+	signedTx, err := w.SignTx(data)
+	if err != nil {
+		return nil, err
+	}
+	tx, err := w.Client.SendTx(context.Background(), signedTx)
+	if err != nil {
+		return nil, err
+	}
+	hash := block.Hex2Hash(tx)
+	return &hash, nil
+}
+
 // ApprovalErc721 授权
 func (w *Account) ApprovalErc721(contract block.Address, tokenID *big.Int) {
 
@@ -410,7 +432,7 @@ func (w *Account) CreateLegacyTxData(nonceStatus NonceStatus, to block.Address, 
 	if err != nil {
 		return nil, err
 	}
-	txData.Gas = gas.Uint64() * 2
+	txData.Gas = gas.Uint64()
 	return txData, nil
 }
 

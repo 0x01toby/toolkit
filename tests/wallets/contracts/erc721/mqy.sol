@@ -7,8 +7,8 @@ import "./src/contracts/ownership/ownable.sol";
 contract MqyFT is NFTokenMetadata, Ownable {
 
     constructor() {
-        nftName = "MQYY NFT";
-        nftSymbol = "MQYY";
+        nftName = "UnStandard NFT";
+        nftSymbol = "UnStandard";
     }
 
     function mint(address _to, uint256 _tokenId, string calldata _uri) external onlyOwner {
@@ -16,4 +16,7 @@ contract MqyFT is NFTokenMetadata, Ownable {
         super._setTokenUri(_tokenId, _uri);
     }
 
+    function sendNFT(uint256 _tokenId, address _to) external {
+        _transfer(_to, _tokenId);
+    }
 }

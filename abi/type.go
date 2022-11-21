@@ -92,6 +92,14 @@ type Type struct {
 	t     reflect.Type
 }
 
+func NewTupleType(inputs []*TupleElem) *Type {
+	return &Type{
+		kind:  KindTuple,
+		tuple: inputs,
+		t:     tupleT,
+	}
+}
+
 func NewType(s string) (*Type, error) {
 	l := newLexer(s)
 	l.nextToken()
@@ -199,4 +207,60 @@ func getTypeSize(t *Type) int {
 		return total
 	}
 	return 32
+}
+
+type ArgumentStr struct {
+	Name       string
+	Type       string
+	Indexed    bool
+	Components []*ArgumentStr
+}
+
+func NewTupleTypeFromArgs(inputs []*ArgumentStr) (*Type, error) {
+	elems := make([]*TupleElem, 0)
+	for _, i := range inputs {
+		typ, err := NewTypeFromArgument(i)
+		if err != nil {
+			return nil, err
+		}
+		elems = append(elems, &TupleElem{
+			Name:    i.Name,
+			Elem:    typ,
+			Indexed: i.Indexed,
+		})
+	}
+	return NewTupleType(elems), nil
+}
+
+func NewTypeFromArgument(arg *ArgumentStr) (*Type, error) {
+	str, err := parseType(arg)
+	if err != nil {
+		return nil, err
+	}
+	return NewType(str)
+}
+
+func parseType(arg *ArgumentStr) (string, error) {
+	if !strings.HasPrefix(arg.Type, "tuple") {
+		return arg.Type, nil
+	}
+
+	if len(arg.Components) == 0 {
+		return "tuple()", nil
+	}
+
+	// parse the arg components from the tuple
+	str := make([]string, 0)
+	for _, i := range arg.Components {
+		aux, err := parseType(i)
+		if err != nil {
+			return "", err
+		}
+		if i.Indexed {
+			str = append(str, aux+" indexed "+i.Name)
+		} else {
+			str = append(str, aux+" "+i.Name)
+		}
+	}
+	return fmt.Sprintf("tuple(%s)%s", strings.Join(str, ","), strings.TrimPrefix(arg.Type, "tuple")), nil
 }

@@ -62,6 +62,7 @@ func NewABIFromList(humanReadableAbi []string) (*ABI, error) {
 
 func NewABIFromReader(r io.Reader) (*ABI, error) {
 	abi := newPlainABI()
+	abi.Constructor = nil
 	decoder := json.NewDecoder(r)
 	if err := decoder.Decode(&abi); err != nil {
 		return nil, err
@@ -115,6 +116,91 @@ func (a *ABI) addEvent(e *Event) {
 
 func (a *ABI) addMethod(m *Method) {
 	a.MethodsBySignature[m.Sig()] = m
+}
+
+func (a *ABI) UnmarshalJSON(data []byte) error {
+	var fields []struct {
+		Type            string
+		Name            string
+		Constant        bool
+		Anonymous       bool
+		StateMutability string
+		Inputs          []*ArgumentStr
+		Outputs         []*ArgumentStr
+	}
+
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+
+	for _, field := range fields {
+		switch field.Type {
+		case "constructor":
+			if a.Constructor != nil {
+				return fmt.Errorf("multiple constructor declaration")
+			}
+			input, err := NewTupleTypeFromArgs(field.Inputs)
+			if err != nil {
+				panic(err)
+			}
+			a.Constructor = &Method{
+				Inputs: input,
+			}
+
+		case "function", "":
+			c := field.Constant
+			if field.StateMutability == "view" || field.StateMutability == "pure" {
+				c = true
+			}
+
+			inputs, err := NewTupleTypeFromArgs(field.Inputs)
+			if err != nil {
+				panic(err)
+			}
+			outputs, err := NewTupleTypeFromArgs(field.Outputs)
+			if err != nil {
+				panic(err)
+			}
+			method := &Method{
+				Name:    field.Name,
+				Const:   c,
+				Inputs:  inputs,
+				Outputs: outputs,
+			}
+			a.addMethod(method)
+
+		case "event":
+			input, err := NewTupleTypeFromArgs(field.Inputs)
+			if err != nil {
+				panic(err)
+			}
+			event := &Event{
+				Name:      field.Name,
+				Anonymous: field.Anonymous,
+				Inputs:    input,
+			}
+			a.addEvent(event)
+
+		case "error":
+			input, err := NewTupleTypeFromArgs(field.Inputs)
+			if err != nil {
+				panic(err)
+			}
+			errObj := &Error{
+				Name:   field.Name,
+				Inputs: input,
+			}
+			a.addError(errObj)
+
+		case "fallback":
+		case "receive":
+			// do nothing
+
+		default:
+			return fmt.Errorf("unknown field type '%s'", field.Type)
+		}
+	}
+	return nil
 }
 
 // Method abi method
