@@ -9,6 +9,7 @@
 #### erc20
 > solc token.sol --bin --abi --optimize -o ./output
 
+> solc demo.sol --bin --abi --optimize -o ./output
 
 # jaeger 搭建
 

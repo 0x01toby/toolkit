@@ -290,13 +290,19 @@ func (w *Account) SendErc721(contract block.Address, to block.Address, tokenID *
 	return &hash, nil
 }
 
-// SendErc721 发送erc721
-func (w *Account) SendUnStandardErc721(contract block.Address, to block.Address, tokenID *big.Int) (*block.Hash, error) {
-	method, err := abi.NewMethod("function sendNFT(uint256 _tokenId, address _to)")
+// PartialFailure 发送erc721
+func (w *Account) PartialFailure(contract block.Address, to block.Address) (*block.Hash, error) {
+	method, err := abi.NewMethod("function partialFailure(address to)")
 	if err != nil {
 		return nil, err
 	}
-	data, err := w.CreateLegacyTxData(Pending, contract, big.NewInt(0), method, tokenID, to.String())
+
+	toWei, err := ToWei("0.2")
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := w.CreateLegacyTxData(Pending, contract, toWei, method, to.String())
 	if err != nil {
 		return nil, err
 	}

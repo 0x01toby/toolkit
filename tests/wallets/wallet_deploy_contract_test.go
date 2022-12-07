@@ -41,3 +41,18 @@ func TestNewWallet_deployContractErc20(t *testing.T) {
 	t.Log("tx_hash:", txHash.String())
 	t.Log("contractAddress:", contractAddress.Hex())
 }
+
+func TestNewWallet_deployInternal(t *testing.T) {
+	wallet := initWallet(t)
+	content, err := os.ReadFile("./contracts/internal/output/MyTest.bin")
+	assert.NoError(t, err)
+	code := string(content)
+	txHash, contractAddress, err := wallet.DeployContractByCreate(code)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	assert.NoError(t, err)
+	t.Log("tx_hash:", txHash.String())
+	t.Log("contract_address:", contractAddress.Hex())
+}

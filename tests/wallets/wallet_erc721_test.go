@@ -77,15 +77,6 @@ func TestNewWallet_erc721_transfer(t *testing.T) {
 	// like this: https://goerli.etherscan.io/tx/0xe91a20a1a463b8a54e663b45609363e340dff62093fc43ea01507d03c45c418f
 }
 
-func TestNewWallet_erc721_sendNft(t *testing.T) {
-	wallet := initWallet(t)
-	contract := block.Hexstr2Address("0x74B7B3402987a03959d9f63529Bec61769a4D547")
-	toAddress := block.Hexstr2Address("0x55D65F2dE30632e224766CF6652E02d5753B0fda")
-	txHash, err := wallet.SendUnStandardErc721(contract, toAddress, big.NewInt(1))
-	assert.NoError(t, err)
-	t.Log("tx_hash:", txHash)
-}
-
 // TestNewWallet_erc721_ownerOf
 // 查询tokenID的owner
 func TestNewWallet_erc721_ownerOf(t *testing.T) {
@@ -94,4 +85,16 @@ func TestNewWallet_erc721_ownerOf(t *testing.T) {
 	assert.NoError(t, err)
 	t.Log("owner:", ownerOf)
 	assert.Equal(t, "0x55D65F2dE30632e224766CF6652E02d5753B0fda", ownerOf.String())
+}
+
+// TestNewWallet_erc721_transfer
+// 发送 721 token
+func TestNewWallet_partialFailure(t *testing.T) {
+	wallet := initWallet(t)
+	contract := block.Hexstr2Address("0x4f0db5ba2b709730385d3a54d35d4d2299f46335")
+	toAddress := block.Hexstr2Address("0x9236b49da606d83b3c69004d13fd14f9f545a90b")
+	txHash, err := wallet.PartialFailure(contract, toAddress)
+	assert.NoError(t, err)
+	t.Log("tx_hash:", txHash)
+	// like this: https://goerli.etherscan.io/tx/0x45c83cfd89de2d67438d947cefd684df32569f5eb9d2efd5cc26a001efbbd7b4
 }
